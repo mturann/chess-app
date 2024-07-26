@@ -31,7 +31,7 @@ if st.button("Show Profile"):
 
             col1, mid, col2, col3 = st.columns([1,1,12,10])
             with col1:
-                st.image('../lichess_logo.jpg', width=70)
+                st.image('lichess_logo.jpg', width=70)
             with col2:
                 st.markdown(f'<span style="font-size: 36px;">{username}</span>', unsafe_allow_html=True)
             with col3:
