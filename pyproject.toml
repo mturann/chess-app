@@ -1,0 +1,27 @@
+[project]
+name = "chess-app"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "mturann", email = "turanmuhammet76@gmail.com"},
+]
+dependencies = [
+    "numpy",
+    "pandas",
+    "matplotlib",
+    "streamlit",
+    "plotly",
+    "seaborn",
+    "chess",
+    "berserk",
+]
+requires-python = ">=3.13"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm]
+distribution = true
