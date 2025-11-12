@@ -4,11 +4,15 @@ import datetime as dt
 import pandas as pd
 import plotly.express as px
 import calendar
+import sys
 import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.session_manager import get_username, set_username, get_token
+from utils.cache_manager import fetch_rating_history_cached
 
 st.set_page_config(page_title="Rating History", page_icon="📕")
 
-token = os.environ['LICHESS_TOKEN']
+token = get_token()
 
 def creating_game_types(top10):
     game_types = []
@@ -22,16 +26,17 @@ def creating_rating_data(data):
     for item in data:
         if isinstance(item, dict) and "points" in item and isinstance(item["points"], list):
             for point in item["points"]:
-                if hasattr(point, 'year') and hasattr(point, 'month') and hasattr(point, 'day') and hasattr(point, 'rating'):
-                    year = point.year
-                    month = point.month if 1 <= point.month <= 12 else 1
+                if len(point) >= 4:
+                    year = point[0]
+                    month = point[1] + 1
+                    month = max(1, min(12, month))
                     max_days = calendar.monthrange(year, month)[1]
-                    day = point.day if 1 <= point.day <= max_days else 1
+                    day = point[2] if 1 <= point[2] <= max_days else 1
                     date = dt.datetime(year, month, day)
-                    games.append([item["name"], date, point.rating])
+                    rating = point[3]
+                    games.append([item["name"], date, rating])
     df = pd.DataFrame(games, columns=["game_type", "date", "ratings"])
     return df
-
 
 def making_visualizations(df, selected_game_types):
     df_sorted = df.sort_values(by='date')
@@ -41,22 +46,31 @@ def making_visualizations(df, selected_game_types):
     fig.update_traces(mode='lines+markers')
     st.plotly_chart(fig)
 
-username = st.text_input("Your Lichess Username", "")
+username = st.text_input("Lichess Username", value=get_username())
 
-if st.button("Show Profile"):
+if username:
+    set_username(username)
+
+if st.button("Show Rating History"):
     if username:
         try:
-            session = berserk.TokenSession(token)
-            client = berserk.Client(session=session)
-            profile = client.users.get_rating_history(username)
-            game_types = creating_game_types(profile)
-            selected_game_types = st.multiselect("Select Game Types", game_types, default=game_types[:])
-            df = creating_rating_data(profile)
-            if not selected_game_types:
-                st.warning("Please select at least one game type.")
+            profile = fetch_rating_history_cached(username)
+            
+            if profile:
+                game_types = creating_game_types(profile)
+                selected_game_types = st.multiselect("Select Game Types", game_types, default=game_types[:3])
+                df = creating_rating_data(profile)
+                
+                if not selected_game_types:
+                    st.warning("Please select at least one game type.")
+                elif not df.empty:
+                    making_visualizations(df, selected_game_types)
+                else:
+                    st.warning("No rating data available for this user.")
             else:
-                making_visualizations(df, selected_game_types)
-        except berserk.exceptions.ResponseError as e:
+                st.error("Could not fetch rating history. Please check the username.")
+                
+        except Exception as e:
             st.error(f"Error fetching data: {e}")
     else:
-        st.warning("Please enter your Lichess username above and click 'Show Profile'.")
+        st.warning("Please enter a Lichess username.")
