@@ -161,3 +161,11 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 .env
+pages/bucket_data/
+pages/raw_games_data.json
+pages/models/
+pages/rating_models/
+*.parquetpages/player_list_by_rating_v2.json
+player_list_by_rating_detailed.json
+pages/player_list_by_rating_v2.json
+pages/training_data.parquet
